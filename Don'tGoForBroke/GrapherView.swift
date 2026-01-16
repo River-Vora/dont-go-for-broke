@@ -10,20 +10,62 @@ import Charts
 import SwiftData
 
 struct GrapherView: View {
-    @State private var expense: String = ""
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \Expense.date, order: .reverse) private var expenses: [Expense]
+    
+    @State private var title: String = ""
+    @State private var amountText: String = ""
+    @State private var date: Date = .now
+    @State private var category: String = "General"
+    @State private var isRecurring: Bool = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            TextField("Enter an expense:", text: $expense)
-                .textFieldStyle(.roundedBorder)
-                .foregroundColor(Color(red: 0.1333333333, green: 0.5450980392, blue: 0.1333333333)) // Forest Green
-                .fontWeight(.bold)
-            
-            Text("Your expense: \(expense)")
-                .fontWeight(.semibold)
-                .foregroundStyle(.blue)
-                .padding()
-            
+            Form {
+                Section("Add Expense") {
+                    TextField("Title", text: $title)
+                    TextField("Amount", text: $amountText)
+                    DatePicker("Date", selection: $date, displayedComponents: .date)
+                    TextField("Category", text: $category)
+                    Toggle("Recurring", isOn: $isRecurring)
+
+                    // Insert action: parse amount and save to SwiftData
+                    Button("Add Expense") {
+                        guard let amount = Decimal(string: amountText), !title.isEmpty else { return }
+                        let newExpense = Expense(title: title,
+                                                 amount: amount,
+                                                 date: date,
+                                                 category: category,
+                                                 isRecurring: isRecurring)
+                        modelContext.insert(newExpense)
+                        try? modelContext.save()
+
+                        // Reset inputs
+                        title = ""
+                        amountText = ""
+                        date = .now
+                        category = "General"
+                        isRecurring = false
+                    }
+                    .disabled(title.isEmpty || Decimal(string: amountText) == nil)
+                }
+
+                Section("Recent Expenses") {
+                    if expenses.isEmpty {
+                        Text("No expenses yet.")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(expenses) { expense in
+                            HStack {
+                                Text(expense.title)
+                                Spacer()
+                                Text("$\(expense.amount)") // Simplified display; format as currency later
+                            }
+                        }
+                    }
+                }
+            }
+
             // Placeholder for a future chart
             // Chart(...) { ... }
             //     .frame(height: 240)

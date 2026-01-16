@@ -11,9 +11,9 @@ import SwiftData
 @main
 struct Don_tGoForBrokeApp: App {
     var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
+        // Initialize an empty SwiftData schema since no default Item model is used.
+        // Add your @Model types to this array when you create them, e.g. [Expense.self, Category.self]
+        let schema = Schema([Expense.self])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
         do {
