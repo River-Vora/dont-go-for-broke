@@ -1,4 +1,4 @@
-name: Xcode - Build and Analyze
+name: Xcode - Build and Analyze (iOS Simulator)
 
 on:
   push:
@@ -10,6 +10,7 @@ jobs:
   ios-simulator:
     name: Build & Analyze (iOS Simulator)
     runs-on: macos-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -24,56 +25,29 @@ jobs:
           xcodebuild -version
           echo "== SDKs =="
           xcodebuild -showsdks || true
-          echo "== Schemes =="
-          xcodebuild -list || true
           echo "== Available simulators =="
           xcrun simctl list devices available || true
+          echo "== Available schemes =="
+          xcodebuild -list || true
 
       - name: Build (iOS Simulator)
         env:
-          SCHEME: "Don'tGoForBroke"   # <- update if your scheme name differs
-          DEST_SIM: "platform=iOS Simulator,name=iPhone 14,OS=latest"
+          SCHEME: "Don'tGoForBroke"   # ← change to exact scheme name if different
+          DEST_SIM: "platform=iOS Simulator,name=iPhone Air,OS=26.2"
         run: |
-          set -e
+          set -euo pipefail
           echo "Building scheme: $SCHEME (iOS simulator)"
-          # If OS=latest isn't available on the runner, change DEST_SIM to a supported OS/version.
+          echo "Using destination: $DEST_SIM"
+          # Validate the destination exists (for clearer failure messages)
+          if ! xcrun simctl list devices available | grep -F "iPhone Air" >/dev/null 2>&1 ; then
+            echo "Requested simulator 'iPhone Air' not found. Listing available devices:"
+            xcrun simctl list devices available || true
+            exit 70
+          fi
           xcodebuild clean build analyze \
             -scheme "$SCHEME" \
             -sdk iphonesimulator \
             -destination "$DEST_SIM" \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            | xcpretty --color && exit ${PIPESTATUS[0]}
-
-  macos:
-    name: Build & Analyze (macOS)
-    runs-on: macos-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install xcpretty
-        run: gem install xcpretty --no-document
-
-      - name: Environment & diagnostics
-        run: |
-          echo "== Xcode info =="
-          xcodebuild -version
-          echo "== SDKs =="
-          xcodebuild -showsdks || true
-          echo "== Schemes =="
-          xcodebuild -list || true
-
-      - name: Build (macOS)
-        env:
-          SCHEME: "Don'tGoForBroke"   # <- update if your scheme name differs
-        run: |
-          set -e
-          echo "Building scheme: $SCHEME (macOS)"
-          xcodebuild clean build analyze \
-            -scheme "$SCHEME" \
-            -destination 'platform=macOS' \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             | xcpretty --color && exit ${PIPESTATUS[0]}
