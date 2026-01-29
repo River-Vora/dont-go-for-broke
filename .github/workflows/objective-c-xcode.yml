@@ -1,0 +1,53 @@
+name: Xcode - Build and Analyze (iOS Simulator)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  ios-simulator:
+    name: Build & Analyze (iOS Simulator)
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install xcpretty
+        run: gem install xcpretty --no-document
+
+      - name: Environment & diagnostics
+        run: |
+          echo "== Xcode info =="
+          xcodebuild -version
+          echo "== SDKs =="
+          xcodebuild -showsdks || true
+          echo "== Available simulators =="
+          xcrun simctl list devices available || true
+          echo "== Available schemes =="
+          xcodebuild -list || true
+
+      - name: Build (iOS Simulator)
+        env:
+          SCHEME: "Don'tGoForBroke"   # ← change to exact scheme name if different
+          DEST_SIM: "platform=iOS Simulator,name=iPhone Air,OS=26.2"
+        run: |
+          set -euo pipefail
+          echo "Building scheme: $SCHEME (iOS simulator)"
+          echo "Using destination: $DEST_SIM"
+          # Validate the destination exists (for clearer failure messages)
+          if ! xcrun simctl list devices available | grep -F "iPhone Air" >/dev/null 2>&1 ; then
+            echo "Requested simulator 'iPhone Air' not found. Listing available devices:"
+            xcrun simctl list devices available || true
+            exit 70
+          fi
+          xcodebuild clean build analyze \
+            -scheme "$SCHEME" \
+            -sdk iphonesimulator \
+            -destination "$DEST_SIM" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            | xcpretty --color && exit ${PIPESTATUS[0]}
