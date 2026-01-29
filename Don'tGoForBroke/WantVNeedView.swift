@@ -45,7 +45,7 @@ struct WantVNeedView: View {
                     Text("What do you want to buy?")
                         .font(.title)
                         .bold()
-                    TextField("Enter item name", text: $itemName)
+                    TextField("Enter item name: ", text: $itemName)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .padding()
                     Button("Start") {
