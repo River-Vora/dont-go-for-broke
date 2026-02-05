@@ -31,6 +31,7 @@ struct WantVNeedView: View {
         .init(text: "Can you afford it right now without debt or sacrificing essentials?", type: .yesNo, choices: nil, score: { ($0 as? Bool) == true ? 8 : 0 }),
         .init(text: "How long will you realistically use it?", type: .choices, choices: ["<1 month", "1-6 months", ">6 months"], score: { ($0 as? Int) == 2 ? 8 : ($0 as? Int) == 1 ? 4 : 0 }),
         .init(text: "Is there a cheaper or better alternative?", type: .yesNo, choices: nil, score: { ($0 as? Bool) == true ? 0 : 5 }),
+		.init(text: "Do you already have this or a similar item?", type: .yesNo, choices: nil, score: { ($0 as? Bool) == true ? 0 : 5 }),
         .init(text: "Would you buy this if it cost twice as much?", type: .yesNo, choices: nil, score: { ($0 as? Bool) == true ? 5 : 0 }),
         .init(text: "Does it help you achieve an important goal?", type: .yesNo, choices: nil, score: { ($0 as? Bool) == true ? 9 : 0 }),
         .init(text: "Will it lose most of its value quickly?", type: .yesNo, choices: nil, score: { ($0 as? Bool) == true ? 0 : 5 }),
